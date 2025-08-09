@@ -23,7 +23,7 @@ target_compile_features(${PROJECT_NAME} INTERFACE
   cxx_std_23
 )
 
-# stm32rcos::printf_float
+# halx::printf_float
 add_library(${PROJECT_NAME}_printf_float INTERFACE)
 add_library(${PROJECT_NAME}::printf_float ALIAS ${PROJECT_NAME}_printf_float)
 target_link_libraries(${PROJECT_NAME}_printf_float INTERFACE
