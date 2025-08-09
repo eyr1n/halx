@@ -108,8 +108,8 @@ public:
   }
 
 private:
-  std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks_{};
-  std::vector<void *> rx_callback_contexts_{};
+  std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks_;
+  std::vector<void *> rx_callback_contexts_;
 
   FdCan(const FdCan &) = delete;
   FdCan &operator=(const FdCan &) = delete;
