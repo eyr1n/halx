@@ -9,7 +9,7 @@
 
 ## ドキュメント
 
-https://eyr1n.github.io/stm32rcos/
+https://eyr1n.github.io/halx/
 
 ## 導入方法
 
@@ -39,6 +39,7 @@ https://eyr1n.github.io/stm32rcos/
 - `Project Manager` -> `Advanced Settings` を選択
   - `Register Callback` -> `CAN` または `FDCAN` を `ENABLE` にする
   - `Register Callback` -> `UART` を `ENABLE` にする
+  - `Register Callback` -> `TIM` を `ENABLE` にする
 
 
 ### プロジェクトにライブラリを追加
