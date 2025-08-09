@@ -56,7 +56,7 @@ private:
 
 template <UART_HandleTypeDef *Handle> class UartRxDma {
 public:
-  UartRxDma(size_t buf_size = 64) : buf_(buf_size) {
+  UartRxDma(size_t buf_size) : buf_(buf_size) {
     stm32cubemx_helper::set_context<Handle, UartRxDma>(this);
     HAL_UART_RegisterCallback(
         Handle, HAL_UART_ERROR_CB_ID,

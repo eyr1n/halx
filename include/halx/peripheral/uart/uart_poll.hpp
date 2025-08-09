@@ -26,7 +26,7 @@ private:
 
 template <UART_HandleTypeDef *Handle> class UartRxPoll {
 public:
-  UartRxPoll() = default;
+  UartRxPoll(size_t) {};
 
   ~UartRxPoll() = default;
 

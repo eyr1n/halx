@@ -54,7 +54,7 @@ private:
 
 template <UART_HandleTypeDef *Handle> class UartRxIt {
 public:
-  UartRxIt(size_t buf_size = 64) : queue_{buf_size} {
+  UartRxIt(size_t buf_size) : queue_{buf_size} {
     stm32cubemx_helper::set_context<Handle, UartRxIt>(this);
     HAL_UART_RegisterCallback(
         Handle, HAL_UART_RX_COMPLETE_CB_ID, [](UART_HandleTypeDef *huart) {

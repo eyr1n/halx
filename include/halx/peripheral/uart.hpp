@@ -48,12 +48,11 @@ template <UART_HandleTypeDef *Handle, UartType RxType> class UartRx;
 
 template <UART_HandleTypeDef *Handle> class UartRx<Handle, UartType::POLL> {
 public:
+  UartRx(size_t buf_size) : rx_{buf_size} {}
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     return rx_.receive(data, size, timeout);
   }
-
   void flush() { rx_.flush(); }
-
   size_t available() const { return rx_.available(); }
 
 private:
@@ -62,12 +61,11 @@ private:
 
 template <UART_HandleTypeDef *Handle> class UartRx<Handle, UartType::IT> {
 public:
+  UartRx(size_t buf_size) : rx_{buf_size} {}
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     return rx_.receive(data, size, timeout);
   }
-
   void flush() { rx_.flush(); }
-
   size_t available() const { return rx_.available(); }
 
 private:
@@ -76,12 +74,11 @@ private:
 
 template <UART_HandleTypeDef *Handle> class UartRx<Handle, UartType::DMA> {
 public:
+  UartRx(size_t buf_size) : rx_{buf_size} {}
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     return rx_.receive(data, size, timeout);
   }
-
   void flush() { rx_.flush(); }
-
   size_t available() const { return rx_.available(); }
 
 private:
@@ -92,16 +89,14 @@ template <UART_HandleTypeDef *Handle, UartType TxType = UartType::IT,
           UartType RxType = UartType::IT>
 class Uart : public UartBase {
 public:
+  Uart(size_t rx_buf_size = 64) : rx_{rx_buf_size} {}
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
     return tx_.transmit(data, size, timeout);
   }
-
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     return rx_.receive(data, size, timeout);
   }
-
   void flush() { rx_.flush(); }
-
   size_t available() const { return rx_.available(); }
 
 private:
