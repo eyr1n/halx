@@ -84,7 +84,6 @@ public:
 private:
   void (*callback_)(void *context);
   void *context_;
-  std::function<void()> func_;
 };
 
 #endif
