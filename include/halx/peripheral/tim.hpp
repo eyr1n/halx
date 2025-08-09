@@ -18,9 +18,6 @@ public:
   virtual bool detach_callback() = 0;
 
   bool attach_callback(std::function<void()> &&callback) {
-    if (callback_) {
-      return false;
-    }
     callback_ = std::move(callback);
     return attach_callback(
         [](void *context) {
