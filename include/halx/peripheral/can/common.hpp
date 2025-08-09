@@ -18,7 +18,7 @@ struct CanMessage {
   uint32_t id;
   bool ide;
   uint8_t dlc;
-  std::array<uint8_t, 8> data;
+  alignas(alignof(uintptr_t)) std::array<uint8_t, 8> data;
 };
 
 /**
