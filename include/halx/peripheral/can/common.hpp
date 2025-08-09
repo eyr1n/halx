@@ -89,12 +89,12 @@ public:
                    void *context) = 0;
   virtual bool detach_rx_filter(size_t filter_index) = 0;
 
-  template <class T>
-  std::optional<size_t> attach_rx_queue(const CanFilter &filter, T &queue) {
+  template <class Queue>
+  std::optional<size_t> attach_rx_queue(const CanFilter &filter, Queue &queue) {
     return attach_rx_filter(
         filter,
         [](const CanMessage &msg, void *context) {
-          auto *queue = reinterpret_cast<T *>(context);
+          auto *queue = reinterpret_cast<Queue *>(context);
           queue->push(msg);
         },
         &queue);
