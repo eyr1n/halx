@@ -12,11 +12,7 @@ namespace halx::peripheral {
 
 template <CAN_HandleTypeDef *Handle> class BxCan {
 public:
-  BxCan()
-      : rx_callbacks_(Handle->Init.StdFiltersNbr + Handle->Init.ExtFiltersNbr,
-                      nullptr),
-        rx_callback_contexts_(
-            Handle->Init.StdFiltersNbr + Handle->Init.ExtFiltersNbr, nullptr) {
+  BxCan() {
     stm32cubemx_helper::set_context<Handle, BxCan>(this);
     HAL_CAN_RegisterCallback(
         Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID,
@@ -66,13 +62,13 @@ public:
   bool transmit(const CanMessage &msg, uint32_t timeout) {
     CAN_TxHeaderTypeDef tx_header = create_tx_header(msg);
     uint32_t tx_mailbox;
-    core::TimeoutHelper timeout_helper;
+    core::TimeoutHelper timeout_helper{timeout};
     while (HAL_CAN_AddTxMessage(Handle, &tx_header, msg.data.data(),
                                 &tx_mailbox) != HAL_OK) {
-      if (timeout_helper.is_timeout(timeout)) {
+      if (timeout_helper.is_timeout()) {
         return false;
       }
-      core::yield(1);
+      core::yield();
     }
     return true;
   }
