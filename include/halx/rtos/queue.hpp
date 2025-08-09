@@ -28,28 +28,16 @@ public:
     queue_id_ = QueueId{osMessageQueueNew(capacity, sizeof(T), &attr)};
   }
 
-  bool push(const T &value, uint32_t timeout) {
+  bool push(const T &value, uint32_t timeout = 0) {
     return osMessageQueuePut(queue_id_.get(), &value, 0, timeout) == osOK;
   }
 
-  bool push(const T &value) { return push(value, 0); }
-
-  std::optional<T> pop(uint32_t timeout) {
+  std::optional<T> pop(uint32_t timeout = 0) {
     T value;
     if (osMessageQueueGet(queue_id_.get(), &value, nullptr, timeout) != osOK) {
       return std::nullopt;
     }
     return value;
-  }
-
-  std::optional<T> pop() { return pop(0); }
-
-  bool pop(T &value, uint32_t timeout) {
-    if (auto a = pop(timeout)) {
-      value = *a;
-      return true;
-    }
-    return false;
   }
 
   void clear() { osMessageQueueReset(queue_id_.get()); }

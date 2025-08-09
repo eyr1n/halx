@@ -60,7 +60,7 @@ public:
     return (write_idx + buf_.size() - read_idx) % buf_.size();
   }
 
-  constexpr size_t capacity() const { return buf_.size() - 1; }
+  size_t capacity() const { return buf_.size() - 1; }
 
 private:
   std::vector<T> buf_;
