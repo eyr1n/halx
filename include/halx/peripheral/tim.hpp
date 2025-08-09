@@ -15,8 +15,23 @@ public:
   virtual void set_counter(uint32_t count) = 0;
   virtual bool attach_callback(void (*callback)(void *context),
                                void *context) = 0;
-  virtual bool attach_callback(std::function<void()> &&callback) = 0;
   virtual bool detach_callback() = 0;
+
+  bool attach_callback(std::function<void()> &&callback) {
+    if (callback_) {
+      return false;
+    }
+    callback_ = std::move(callback);
+    return attach_callback(
+        [](void *context) {
+          auto callback = reinterpret_cast<std::function<void()> *>(context);
+          (*callback)();
+        },
+        &callback_);
+  }
+
+private:
+  std::function<void()> callback_;
 };
 
 #ifdef HAL_TIM_MODULE_ENABLED
@@ -59,19 +74,6 @@ public:
     callback_ = callback;
     context_ = context;
     return true;
-  }
-
-  bool attach_callback(std::function<void()> &&callback) override {
-    if (func_) {
-      return false;
-    }
-    func_ = std::move(callback);
-    return attach_callback(
-        [](void *context) {
-          auto func = reinterpret_cast<std::function<void()> *>(context);
-          (*func)();
-        },
-        &func_);
   }
 
   bool detach_callback() override {
