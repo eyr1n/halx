@@ -104,7 +104,6 @@ public:
       return false;
     }
     rx_callbacks_[filter_index] = nullptr;
-    rx_callback_contexts_[filter_index] = nullptr;
     return true;
   }
 

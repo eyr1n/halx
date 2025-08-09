@@ -15,6 +15,7 @@ public:
   virtual void set_counter(uint32_t count) = 0;
   virtual bool attach_callback(void (*callback)(void *context),
                                void *context) = 0;
+  virtual bool attach_callback(std::function<void()> &&callback) = 0;
   virtual bool detach_callback() = 0;
 };
 
@@ -22,9 +23,21 @@ public:
 
 template <TIM_HandleTypeDef *Handle> class Tim : public TimBase {
 public:
-  Tim() { stm32cubemx_helper::set_context<Handle, Tim>(this); }
+  Tim() {
+    stm32cubemx_helper::set_context<Handle, Tim>(this);
+    HAL_TIM_RegisterCallback(
+        Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID, [](TIM_HandleTypeDef *) {
+          auto tim = stm32cubemx_helper::get_context<Handle, Tim>();
+          if (tim->callback_) {
+            tim->callback_(tim->context_);
+          }
+        });
+  }
 
-  ~Tim() override { stm32cubemx_helper::set_context<Handle, Tim>(nullptr); }
+  ~Tim() override {
+    HAL_TIM_UnRegisterCallback(Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID);
+    stm32cubemx_helper::set_context<Handle, Tim>(nullptr);
+  }
 
   bool start() override { return HAL_TIM_Base_Start_IT(Handle) == HAL_OK; }
 
@@ -40,16 +53,18 @@ public:
 
   bool attach_callback(void (*callback)(void *context),
                        void *context) override {
+    if (callback) {
+      return false;
+    }
     callback_ = callback;
     context_ = context;
-    return HAL_TIM_RegisterCallback(
-               Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID, [](TIM_HandleTypeDef *) {
-                 auto tim = stm32cubemx_helper::get_context<Handle, Tim>();
-                 tim->callback_(tim->context_);
-               }) == HAL_OK;
+    return true;
   }
 
-  bool attach_callback(std::function<void()> &&callback) {
+  bool attach_callback(std::function<void()> &&callback) override {
+    if (func_) {
+      return false;
+    }
     func_ = std::move(callback);
     return attach_callback(
         [](void *context) {
@@ -60,8 +75,11 @@ public:
   }
 
   bool detach_callback() override {
-    return HAL_TIM_UnRegisterCallback(Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID) ==
-           HAL_OK;
+    if (!callback_) {
+      return false;
+    }
+    callback_ = nullptr;
+    return true;
   }
 
 private:
