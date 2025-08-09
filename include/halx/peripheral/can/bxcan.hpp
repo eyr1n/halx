@@ -133,7 +133,7 @@ private:
     filter_config.FilterBank = filter_index;
 #ifdef CAN2
     if (Handle->Instance == CAN2) {
-      filter_index += FILTER_BANK_SIZE;
+      filter_config.FilterBank += FILTER_BANK_SIZE;
     }
 #endif
     filter_config.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -149,7 +149,7 @@ private:
     filter_config.FilterBank = filter_index;
 #ifdef CAN2
     if (Handle->Instance == CAN2) {
-      filter_index += FILTER_BANK_SIZE;
+      filter_config.FilterBank += FILTER_BANK_SIZE;
     }
 #endif
     filter_config.FilterActivation = DISABLE;
