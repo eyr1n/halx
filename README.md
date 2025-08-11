@@ -68,6 +68,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 include(FetchContent)
 FetchContent_Declare(halx
   GIT_REPOSITORY https://github.com/eyr1n/halx.git
+  GIT_TAG        v0.0.1
 )
 FetchContent_MakeAvailable(halx)
 
