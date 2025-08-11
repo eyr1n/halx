@@ -8,7 +8,7 @@ FetchContent_Declare(stm32cubemx_helper
 )
 FetchContent_MakeAvailable(stm32cubemx_helper)
 
-# stm32rcos
+# halx
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE
   src/stdout.cpp
