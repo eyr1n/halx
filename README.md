@@ -14,7 +14,7 @@ https://eyr1n.github.io/halx_driver/
 
 ## 導入方法
 
-このライブラリには CMSIS-RTOS2(FreeRTOS) が~~必要~~あってもなくてもいいです。
+このライブラリには CMSIS-RTOS2(FreeRTOS) が ~~必要~~ あってもなくてもいいです。
 
 ### Timebase Sourceの切り替え
 
