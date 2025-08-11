@@ -35,6 +35,8 @@ private:
 
 template <TIM_HandleTypeDef *Handle> class Tim : public TimBase {
 public:
+  using TimBase::attach_callback;
+
   Tim() {
     stm32cubemx_helper::set_context<Handle, Tim>(this);
     HAL_TIM_RegisterCallback(
@@ -65,7 +67,7 @@ public:
 
   bool attach_callback(void (*callback)(void *context),
                        void *context) override {
-    if (callback) {
+    if (callback_) {
       return false;
     }
     callback_ = callback;
