@@ -33,7 +33,7 @@ jobs:
           sudo make install
       - run: |
           cmake -B build -DCMSIS_DEVICE_HEADER=CMSIS_device_header
-          cmake --build build --target docs
+          cmake --build build --target halx_docs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./build/html

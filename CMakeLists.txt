@@ -39,7 +39,7 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
   set(DOXYGEN_DISABLE_INDEX NO)
   set(DOXYGEN_GENERATE_TREEVIEW NO)
-  doxygen_add_docs(docs
+  doxygen_add_docs(${PROJECT_NAME}_docs
     README.md
     ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
