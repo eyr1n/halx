@@ -117,7 +117,7 @@ public:
   }
 
 private:
-  std::function<void()> callback_;
+  std::function<void(const CanMessage &)> callback_;
 };
 
 } // namespace halx::peripheral
