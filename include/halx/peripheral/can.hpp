@@ -19,6 +19,8 @@ template <auto *Handle, class HandleType = decltype(Handle)> class Can;
 template <auto *Handle>
 class Can<Handle, CAN_HandleTypeDef *> : public CanBase {
 public:
+  using CanBase::attach_rx_filter;
+
   bool start() override { return can_.start(); }
   bool stop() override { return can_.stop(); }
   bool transmit(const CanMessage &msg, uint32_t timeout) override {
@@ -45,6 +47,8 @@ private:
 template <auto *Handle>
 class Can<Handle, FDCAN_HandleTypeDef *> : public CanBase {
 public:
+  using CanBase::attach_rx_filter;
+
   bool start() override { return can_.start(); }
   bool stop() override { return can_.stop(); }
   bool transmit(const CanMessage &msg, uint32_t timeout) override {

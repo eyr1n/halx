@@ -89,6 +89,21 @@ public:
                    void *context) = 0;
   virtual bool detach_rx_filter(size_t filter_index) = 0;
 
+  std::optional<size_t>
+  attach_rx_filter(const CanFilter &filter,
+                   std::function<void(const CanMessage &)> &&callback) {
+    callback_ = std::move(callback);
+    return attach_rx_filter(
+        filter,
+        [](const CanMessage &msg, void *context) {
+          auto callback =
+              reinterpret_cast<std::function<void(const CanMessage &)> *>(
+                  context);
+          (*callback)(msg);
+        },
+        &callback_);
+  }
+
   template <class Queue>
   std::optional<size_t> attach_rx_queue(const CanFilter &filter, Queue &queue) {
     return attach_rx_filter(
@@ -99,6 +114,9 @@ public:
         },
         &queue);
   }
+
+private:
+  std::function<void()> callback_;
 };
 
 } // namespace halx::peripheral
