@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <optional>
 
 #include "halx/core.hpp"
