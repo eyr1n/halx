@@ -84,8 +84,8 @@ public:
   }
 
 private:
-  void (*callback_)(void *context);
-  void *context_;
+  void (*callback_)(void *context) = nullptr;
+  void *context_ = nullptr;
 };
 
 #endif
