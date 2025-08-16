@@ -3,11 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 project(halx LANGUAGES CXX)
 
 # stm32cubemx_helper
-include(FetchContent)
-FetchContent_Declare(stm32cubemx_helper
-  GIT_REPOSITORY https://github.com/eyr1n/stm32cubemx_helper.git
-)
-FetchContent_MakeAvailable(stm32cubemx_helper)
+add_subdirectory(stm32cubemx_helper)
 
 # halx
 add_library(${PROJECT_NAME} OBJECT
