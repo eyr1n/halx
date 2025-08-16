@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <optional>
 
 #include "halx/core.hpp"
@@ -11,37 +12,52 @@
 namespace halx::peripheral {
 
 template <CAN_HandleTypeDef *Handle> class BxCan {
+private:
+  struct State {
+    static constexpr uint32_t FILTER_BANK_SIZE = 14;
+
+    std::array<void (*)(const CanMessage &msg, void *context), FILTER_BANK_SIZE>
+        rx_callbacks{};
+    std::array<void *, FILTER_BANK_SIZE> rx_callback_contexts{};
+
+    State() {
+      stm32cubemx_helper::set_context<Handle, State>(this);
+      HAL_CAN_RegisterCallback(
+          Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID,
+          [](CAN_HandleTypeDef *hcan) {
+            CAN_RxHeaderTypeDef rx_header;
+            CanMessage msg;
+
+            auto state = stm32cubemx_helper::get_context<Handle, State>();
+
+            while (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header,
+                                        msg.data.data()) == HAL_OK) {
+              if (rx_header.FilterMatchIndex >= State::FILTER_BANK_SIZE) {
+                continue;
+              }
+              auto rx_callback =
+                  state->rx_callbacks[rx_header.FilterMatchIndex];
+              if (rx_callback) {
+                update_rx_message(msg, rx_header);
+                rx_callback(
+                    msg,
+                    state->rx_callback_contexts[rx_header.FilterMatchIndex]);
+              }
+            }
+          });
+    }
+  };
+
+  struct Deleter {
+    void operator()(State *state) {
+      HAL_CAN_UnRegisterCallback(Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID);
+      stm32cubemx_helper::set_context<Handle, State>(nullptr);
+      delete state;
+    }
+  };
+
 public:
-  BxCan() {
-    stm32cubemx_helper::set_context<Handle, BxCan>(this);
-    HAL_CAN_RegisterCallback(
-        Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID,
-        [](CAN_HandleTypeDef *hcan) {
-          CAN_RxHeaderTypeDef rx_header;
-          CanMessage msg;
-
-          auto bxcan = stm32cubemx_helper::get_context<Handle, BxCan>();
-
-          while (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header,
-                                      msg.data.data()) == HAL_OK) {
-            if (rx_header.FilterMatchIndex >= BxCan::FILTER_BANK_SIZE) {
-              continue;
-            }
-            auto rx_callback = bxcan->rx_callbacks_[rx_header.FilterMatchIndex];
-            if (rx_callback) {
-              update_rx_message(msg, rx_header);
-              rx_callback(
-                  msg,
-                  bxcan->rx_callback_contexts_[rx_header.FilterMatchIndex]);
-            }
-          }
-        });
-  }
-
-  ~BxCan() {
-    HAL_CAN_UnRegisterCallback(Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID);
-    stm32cubemx_helper::set_context<Handle, BxCan>(nullptr);
-  }
+  BxCan() : state_{new State{}} {}
 
   bool start() {
     if (HAL_CAN_ActivateNotification(Handle, CAN_IT_RX_FIFO0_MSG_PENDING) !=
@@ -84,8 +100,8 @@ public:
     if (!enable_rx_filter(filter, *filter_index)) {
       return std::nullopt;
     }
-    rx_callbacks_[*filter_index] = callback;
-    rx_callback_contexts_[*filter_index] = context;
+    state_->rx_callbacks[*filter_index] = callback;
+    state_->rx_callback_contexts[*filter_index] = context;
     return filter_index;
   }
 
@@ -93,26 +109,20 @@ public:
     if (!disable_rx_filter(filter_index)) {
       return false;
     }
-    rx_callbacks_[filter_index] = nullptr;
+    state_->rx_callbacks[filter_index] = nullptr;
     return true;
   }
 
 private:
-  static constexpr uint32_t FILTER_BANK_SIZE = 14;
-
-  std::array<void (*)(const CanMessage &msg, void *context), FILTER_BANK_SIZE>
-      rx_callbacks_{};
-  std::array<void *, FILTER_BANK_SIZE> rx_callback_contexts_{};
-
-  BxCan(const BxCan &) = delete;
-  BxCan &operator=(const BxCan &) = delete;
+  std::unique_ptr<State, Deleter> state_;
 
   std::optional<size_t> find_rx_filter_index(const CanFilter &) {
-    auto it = std::find(rx_callbacks_.begin(), rx_callbacks_.end(), nullptr);
-    if (it == rx_callbacks_.end()) {
+    auto it = std::find(state_->rx_callbacks.begin(),
+                        state_->rx_callbacks.end(), nullptr);
+    if (it == state_->rx_callbacks.end()) {
       return std::nullopt;
     }
-    return std::distance(rx_callbacks_.begin(), it);
+    return std::distance(state_->rx_callbacks.begin(), it);
   }
 
   static inline bool enable_rx_filter(const CanFilter &filter,

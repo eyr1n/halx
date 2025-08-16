@@ -12,7 +12,7 @@
 namespace halx::peripheral {
 
 template <FDCAN_HandleTypeDef *Handle> class FdCan {
-public:
+private:
   struct State {
     std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks;
     std::vector<void *> rx_callback_contexts;
@@ -59,6 +59,7 @@ public:
     }
   };
 
+public:
   FdCan() : state_{new State{}} {}
 
   bool start() {
