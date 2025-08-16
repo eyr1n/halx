@@ -15,7 +15,8 @@ namespace halx::peripheral {
 
 template <class T>
 concept DmaBuffer =
-    std::ranges::contiguous_range<T> && std::ranges::sized_range<T>;
+    std::ranges::contiguous_range<T> && std::ranges::sized_range<T> &&
+    std::ranges::borrowed_range<T>;
 
 template <UART_HandleTypeDef *Handle> class UartTxDma {
 private:
@@ -50,7 +51,7 @@ private:
   };
 
 public:
-  UartTxDma(DmaBuffer auto &buf)
+  UartTxDma(DmaBuffer auto &&buf)
       : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
 
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
@@ -109,7 +110,7 @@ private:
   };
 
 public:
-  UartRxDma(DmaBuffer auto &buf)
+  UartRxDma(DmaBuffer auto &&buf)
       : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
