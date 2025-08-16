@@ -14,9 +14,11 @@ namespace halx::peripheral {
 template <UART_HandleTypeDef *Handle> class UartTxDma {
 private:
   struct State {
+    uint8_t *buf;
+    size_t size;
     core::Notifier notifier;
 
-    State() {
+    State(uint8_t *buf, size_t size) : buf{buf}, size{size} {
       stm32cubemx_helper::set_context<Handle, State>(this);
       HAL_UART_RegisterCallback(
           Handle, HAL_UART_TX_COMPLETE_CB_ID, [](UART_HandleTypeDef *) {
@@ -42,11 +44,15 @@ private:
   };
 
 public:
-  UartTxDma() : state_{new State{}} {}
+  UartTxDma(uint8_t *buf, size_t size) : state_{new State{buf, size}} {}
 
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
+    if (size > state_->size) {
+      return false;
+    }
+    std::memcpy(state_->buf, data, size);
     state_->notifier.reset();
-    if (HAL_UART_Transmit_DMA(Handle, data, size) != HAL_OK) {
+    if (HAL_UART_Transmit_DMA(Handle, state_->buf, size) != HAL_OK) {
       HAL_UART_AbortTransmit(Handle);
       return false;
     }
