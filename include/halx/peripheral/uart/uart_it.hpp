@@ -66,7 +66,7 @@ private:
     core::RingBuffer<uint8_t> queue;
     uint8_t buf;
 
-    State(size_t buf_size) : queue{buf_size} {
+    State(size_t size) : queue{size} {
       stm32cubemx_helper::set_context<Handle, State>(this);
       HAL_UART_RegisterCallback(
           Handle, HAL_UART_RX_COMPLETE_CB_ID, [](UART_HandleTypeDef *huart) {
@@ -100,7 +100,7 @@ private:
   };
 
 public:
-  UartRxIt(size_t buf_size) : state_{new State{buf_size}} {}
+  UartRxIt(size_t size) : state_{new State{size}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::TimeoutHelper timeout_helper{timeout};

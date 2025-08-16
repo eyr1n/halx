@@ -66,10 +66,10 @@ template <UART_HandleTypeDef *Handle> class UartRxDma {
 private:
   struct State {
     uint8_t *buf;
-    size_t buf_size;
+    size_t size;
     std::atomic<size_t> read_idx{0};
 
-    State(uint8_t *buf, size_t buf_size) : buf{buf}, buf_size{buf_size} {
+    State(uint8_t *buf, size_t size) : buf{buf}, size{size} {
       stm32cubemx_helper::set_context<Handle, State>(this);
       HAL_UART_RegisterCallback(
           Handle, HAL_UART_ERROR_CB_ID,
@@ -78,10 +78,10 @@ private:
           Handle, HAL_UART_ABORT_RECEIVE_COMPLETE_CB_ID,
           [](UART_HandleTypeDef *huart) {
             auto state = stm32cubemx_helper::get_context<Handle, State>();
-            HAL_UART_Receive_DMA(huart, state->buf, state->buf_size);
+            HAL_UART_Receive_DMA(huart, state->buf, state->size);
             state->read_idx.store(0, std::memory_order_relaxed);
           });
-      HAL_UART_Receive_DMA(Handle, buf, buf_size);
+      HAL_UART_Receive_DMA(Handle, buf, size);
     }
   };
 
@@ -97,7 +97,7 @@ private:
   };
 
 public:
-  UartRxDma(uint8_t *buf, size_t buf_size) : state_{new State{buf, buf_size}} {}
+  UartRxDma(uint8_t *buf, size_t size) : state_{new State{buf, size}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::TimeoutHelper timeout_helper{timeout};
@@ -117,9 +117,9 @@ public:
   void flush() { advance(available()); }
 
   size_t available() const {
-    size_t write_idx = state_->buf_size - __HAL_DMA_GET_COUNTER(Handle->hdmarx);
+    size_t write_idx = state_->size - __HAL_DMA_GET_COUNTER(Handle->hdmarx);
     size_t read_idx = state_->read_idx.load(std::memory_order_relaxed);
-    return (state_->buf_size + write_idx - read_idx) % state_->buf_size;
+    return (state_->size + write_idx - read_idx) % state_->size;
   }
 
 private:
@@ -129,7 +129,7 @@ private:
     size_t read_idx = state_->read_idx.load(std::memory_order_relaxed);
     while (true) {
       if (state_->read_idx.compare_exchange_weak(
-              read_idx, (read_idx + len) % state_->buf_size,
+              read_idx, (read_idx + len) % state_->size,
               std::memory_order_relaxed, std::memory_order_relaxed)) {
         break;
       }
