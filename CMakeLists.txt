@@ -10,18 +10,17 @@ FetchContent_Declare(stm32cubemx_helper
 FetchContent_MakeAvailable(stm32cubemx_helper)
 
 # halx
-add_library(${PROJECT_NAME} INTERFACE)
-target_sources(${PROJECT_NAME} INTERFACE
+add_library(${PROJECT_NAME} OBJECT
   src/stdout.cpp
 )
-target_link_libraries(${PROJECT_NAME} INTERFACE
+target_link_libraries(${PROJECT_NAME} PUBLIC
   stm32cubemx
   stm32cubemx_helper
 )
-target_include_directories(${PROJECT_NAME} INTERFACE
+target_include_directories(${PROJECT_NAME} PUBLIC
   include
 )
-target_compile_features(${PROJECT_NAME} INTERFACE
+target_compile_features(${PROJECT_NAME} PUBLIC
   cxx_std_23
 )
 
