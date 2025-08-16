@@ -12,42 +12,53 @@ namespace halx::peripheral {
 
 template <FDCAN_HandleTypeDef *Handle> class FdCan {
 public:
-  FdCan()
-      : rx_callbacks_(Handle->Init.StdFiltersNbr + Handle->Init.ExtFiltersNbr,
-                      nullptr),
-        rx_callback_contexts_(
-            Handle->Init.StdFiltersNbr + Handle->Init.ExtFiltersNbr, nullptr) {
-    stm32cubemx_helper::set_context<Handle, FdCan>(this);
-    HAL_FDCAN_RegisterRxFifo0Callback(
-        Handle, [](FDCAN_HandleTypeDef *hfdcan, uint32_t) {
-          FDCAN_RxHeaderTypeDef rx_header;
-          CanMessage msg;
+  struct State {
+    std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks;
+    std::vector<void *> rx_callback_contexts;
 
-          auto fdcan = stm32cubemx_helper::get_context<Handle, FdCan>();
+    State()
+        : rx_callbacks(Handle->Init.StdFiltersNbr + Handle->Init.ExtFiltersNbr,
+                       nullptr),
+          rx_callback_contexts(Handle->Init.StdFiltersNbr +
+                                   Handle->Init.ExtFiltersNbr,
+                               nullptr) {
+      stm32cubemx_helper::set_context<Handle, State>(this);
+      HAL_FDCAN_RegisterRxFifo0Callback(
+          Handle, [](FDCAN_HandleTypeDef *hfdcan, uint32_t) {
+            FDCAN_RxHeaderTypeDef rx_header;
+            CanMessage msg;
 
-          while (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header,
-                                        msg.data.data()) == HAL_OK) {
-            if (rx_header.IsFilterMatchingFrame == 1 ||
-                rx_header.FilterIndex >= fdcan->rx_callbacks_.size()) {
-              continue;
-            }
-            size_t filter_index = rx_header.FilterIndex;
-            if (rx_header.IdType == FDCAN_EXTENDED_ID) {
-              filter_index += Handle->Init.StdFiltersNbr;
-            }
-            auto rx_callback = fdcan->rx_callbacks_[filter_index];
-            if (rx_callback) {
-              update_rx_message(msg, rx_header);
-              rx_callback(msg, fdcan->rx_callback_contexts_[filter_index]);
-            }
-          }
-        });
-  }
+            auto state = stm32cubemx_helper::get_context<Handle, State>();
 
-  ~FdCan() {
-    HAL_FDCAN_UnRegisterRxFifo0Callback(Handle);
-    stm32cubemx_helper::set_context<Handle, FdCan>(nullptr);
-  }
+            while (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header,
+                                          msg.data.data()) == HAL_OK) {
+              if (rx_header.IsFilterMatchingFrame == 1 ||
+                  rx_header.FilterIndex >= state->rx_callbacks.size()) {
+                continue;
+              }
+              size_t filter_index = rx_header.FilterIndex;
+              if (rx_header.IdType == FDCAN_EXTENDED_ID) {
+                filter_index += Handle->Init.StdFiltersNbr;
+              }
+              auto rx_callback = state->rx_callbacks[filter_index];
+              if (rx_callback) {
+                update_rx_message(msg, rx_header);
+                rx_callback(msg, state->rx_callback_contexts[filter_index]);
+              }
+            }
+          });
+    }
+  };
+
+  struct Deleter {
+    void operator()(State *state) {
+      HAL_FDCAN_UnRegisterRxFifo0Callback(Handle);
+      stm32cubemx_helper::set_context<Handle, State>(nullptr);
+      delete state;
+    }
+  };
+
+  FdCan() : state_{new State{}} {}
 
   bool start() {
     if (HAL_FDCAN_ConfigGlobalFilter(Handle, FDCAN_REJECT, FDCAN_REJECT,
@@ -94,8 +105,8 @@ public:
     if (!enable_rx_filter(filter, *filter_index)) {
       return std::nullopt;
     }
-    rx_callbacks_[*filter_index] = callback;
-    rx_callback_contexts_[*filter_index] = context;
+    state_->rx_callbacks[*filter_index] = callback;
+    state_->rx_callback_contexts[*filter_index] = context;
     return filter_index;
   }
 
@@ -103,33 +114,30 @@ public:
     if (!disable_rx_filter(filter_index)) {
       return false;
     }
-    rx_callbacks_[filter_index] = nullptr;
+    state_->rx_callbacks[filter_index] = nullptr;
     return true;
   }
 
 private:
-  std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks_;
-  std::vector<void *> rx_callback_contexts_;
-
-  FdCan(const FdCan &) = delete;
-  FdCan &operator=(const FdCan &) = delete;
+  std::unique_ptr<State, Deleter> state_;
 
   std::optional<size_t> find_rx_filter_index(const CanFilter &filter) {
     if (filter.ide) {
-      auto it = std::find(rx_callbacks_.begin() + Handle->Init.StdFiltersNbr,
-                          rx_callbacks_.end(), nullptr);
-      if (it == rx_callbacks_.end()) {
+      auto it =
+          std::find(state_->rx_callbacks.begin() + Handle->Init.StdFiltersNbr,
+                    state_->rx_callbacks.end(), nullptr);
+      if (it == state_->rx_callbacks.end()) {
         return std::nullopt;
       }
-      return std::distance(rx_callbacks_.begin(), it);
+      return std::distance(state_->rx_callbacks.begin(), it);
     } else {
-      auto it = std::find(rx_callbacks_.begin(),
-                          rx_callbacks_.begin() + Handle->Init.StdFiltersNbr,
-                          nullptr);
-      if (it == rx_callbacks_.begin() + Handle->Init.StdFiltersNbr) {
+      auto it = std::find(
+          state_->rx_callbacks.begin(),
+          state_->rx_callbacks.begin() + Handle->Init.StdFiltersNbr, nullptr);
+      if (it == state_->rx_callbacks.begin() + Handle->Init.StdFiltersNbr) {
         return std::nullopt;
       }
-      return std::distance(rx_callbacks_.begin(), it);
+      return std::distance(state_->rx_callbacks.begin(), it);
     }
   }
 
