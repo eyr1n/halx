@@ -100,7 +100,7 @@ private:
   };
 
 public:
-  UartRxIt(size_t size) : state_{new State{size}} {}
+  UartRxIt(size_t size = 64) : state_{new State{size}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::TimeoutHelper timeout_helper{timeout};

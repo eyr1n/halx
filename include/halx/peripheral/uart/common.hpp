@@ -5,12 +5,6 @@
 
 namespace halx::peripheral {
 
-enum class UartType {
-  POLL,
-  IT,
-  DMA,
-};
-
 /**
  * デフォルトでTx, Rxともに割り込みを使用します。
  *

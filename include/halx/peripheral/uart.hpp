@@ -12,9 +12,13 @@ namespace halx::peripheral {
 
 #ifdef HAL_UART_MODULE_ENABLED
 
-template <class Tx, class Rx> class Uart : public UartBase {
+template <UART_HandleTypeDef *Handle,
+          template <UART_HandleTypeDef *> class UartTx = UartTxIt,
+          template <UART_HandleTypeDef *> class UartRx = UartRxIt>
+class Uart : public UartBase {
 public:
-  Uart(Tx &&tx, Rx &&rx) : tx_{std::move(tx)}, rx_{std::move(rx)} {}
+  Uart(UartTx<Handle> &&tx = {}, UartRx<Handle> &&rx = {})
+      : tx_{std::move(tx)}, rx_{std::move(rx)} {}
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
     return tx_.transmit(data, size, timeout);
   }
@@ -25,8 +29,8 @@ public:
   size_t available() const { return rx_.available(); }
 
 private:
-  Tx tx_;
-  Rx rx_;
+  UartTx<Handle> tx_;
+  UartRx<Handle> rx_;
 };
 
 #endif
