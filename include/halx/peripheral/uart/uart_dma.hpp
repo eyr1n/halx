@@ -5,12 +5,17 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <ranges>
 
 #include "halx/core.hpp"
 
 #include "common.hpp"
 
 namespace halx::peripheral {
+
+template <class T>
+concept DmaBuffer =
+    std::ranges::contiguous_range<T> && std::ranges::sized_range<T>;
 
 template <UART_HandleTypeDef *Handle> class UartTxDma {
 private:
@@ -45,7 +50,8 @@ private:
   };
 
 public:
-  UartTxDma(uint8_t *buf, size_t size) : state_{new State{buf, size}} {}
+  UartTxDma(DmaBuffer auto &buf)
+      : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
 
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
     if (size > state_->size) {
@@ -103,7 +109,8 @@ private:
   };
 
 public:
-  UartRxDma(uint8_t *buf, size_t size) : state_{new State{buf, size}} {}
+  UartRxDma(DmaBuffer auto &buf)
+      : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::TimeoutHelper timeout_helper{timeout};
