@@ -55,7 +55,7 @@ private:
 public:
   using TimBase::attach_callback;
 
-  Tim() : state{std::make_unique<State>()} {}
+  Tim() : state_{std::make_unique<State>()} {}
 
   bool start() override { return HAL_TIM_Base_Start_IT(Handle) == HAL_OK; }
 
