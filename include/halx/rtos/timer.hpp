@@ -27,7 +27,7 @@ public:
     timer_id_ = TimerId{osTimerNew(func, type, args, &attr)};
   }
 
-  Timer(std::move_only_function<void()> &&func, void *args, osTimerType_t type,
+  Timer(std::move_only_function<void()> &&func, osTimerType_t type,
         uint32_t attr_bits = 0)
       : func_{std::move(func)} {
     osTimerAttr_t attr{};
