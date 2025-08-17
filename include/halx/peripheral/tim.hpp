@@ -29,24 +29,35 @@ private:
 #ifdef HAL_TIM_MODULE_ENABLED
 
 template <TIM_HandleTypeDef *Handle> class Tim : public TimBase {
+private:
+  struct State {
+    void (*callback)(void *context) = nullptr;
+    void *context = nullptr;
+
+    State() {
+      stm32cubemx_helper::set_context<Handle, State>(this);
+      HAL_TIM_RegisterCallback(
+          Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID, [](TIM_HandleTypeDef *) {
+            auto state = stm32cubemx_helper::get_context<Handle, State>();
+            if (state->callback) {
+              state->callback(state->context);
+            }
+          });
+    }
+  };
+
+  struct Deleter {
+    void operator()(State *state) {
+      HAL_TIM_UnRegisterCallback(Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID);
+      stm32cubemx_helper::set_context<Handle, State>(nullptr);
+      delete state;
+    }
+  };
+
 public:
   using TimBase::attach_callback;
 
-  Tim() {
-    stm32cubemx_helper::set_context<Handle, Tim>(this);
-    HAL_TIM_RegisterCallback(
-        Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID, [](TIM_HandleTypeDef *) {
-          auto tim = stm32cubemx_helper::get_context<Handle, Tim>();
-          if (tim->callback_) {
-            tim->callback_(tim->context_);
-          }
-        });
-  }
-
-  ~Tim() override {
-    HAL_TIM_UnRegisterCallback(Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID);
-    stm32cubemx_helper::set_context<Handle, Tim>(nullptr);
-  }
+  Tim() : state_{new State{}} {}
 
   bool start() override { return HAL_TIM_Base_Start_IT(Handle) == HAL_OK; }
 
@@ -62,25 +73,24 @@ public:
 
   bool attach_callback(void (*callback)(void *context),
                        void *context) override {
-    if (callback_) {
+    if (state_->callback) {
       return false;
     }
-    callback_ = callback;
-    context_ = context;
+    state_->callback = callback;
+    state_->context = context;
     return true;
   }
 
   bool detach_callback() override {
-    if (!callback_) {
+    if (!state_->callback) {
       return false;
     }
-    callback_ = nullptr;
+    state_->callback = nullptr;
     return true;
   }
 
 private:
-  void (*callback_)(void *context) = nullptr;
-  void *context_ = nullptr;
+  std::unique_ptr<State, Deleter> state_;
 };
 
 #endif
