@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <type_traits>
 
 #include <cmsis_os2.h>
+
+#include "halx/core.hpp"
 
 namespace halx::rtos {
 
@@ -24,6 +27,14 @@ public:
     timer_id_ = TimerId{osTimerNew(func, type, args, &attr)};
   }
 
+  Timer(std::move_only_function<void()> &&func, void *args, osTimerType_t type,
+        uint32_t attr_bits = 0)
+      : func_{std::move(func)} {
+    osTimerAttr_t attr{};
+    attr.attr_bits = attr_bits;
+    timer_id_ = TimerId{osTimerNew(func_.call, type, func_.c_ptr(), &attr)};
+  }
+
   bool start(uint32_t ticks) {
     return osTimerStart(timer_id_.get(), ticks) == osOK;
   }
@@ -34,6 +45,7 @@ public:
 
 private:
   TimerId timer_id_;
+  core::Function<void()> func_;
 };
 
 } // namespace halx::rtos
