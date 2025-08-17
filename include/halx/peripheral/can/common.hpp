@@ -102,7 +102,7 @@ public:
     return attach_rx_filter(
         filter,
         [](const CanMessage &msg, void *context) {
-          auto *queue = reinterpret_cast<Queue *>(context);
+          auto *queue = static_cast<Queue *>(context);
           queue->push(msg);
         },
         &queue);
