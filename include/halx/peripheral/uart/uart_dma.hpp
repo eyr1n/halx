@@ -38,21 +38,19 @@ private:
             state->notifier.set(0x2);
           });
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_UART_AbortTransmit(Handle);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_TX_COMPLETE_CB_ID);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_ERROR_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
   UartTxDma(DmaBuffer auto &&buf)
-      : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
+      : state_{std::make_unique<State>(std::ranges::data(buf),
+                                       std::ranges::size(buf))} {}
 
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
     if (size > state_->size) {
@@ -72,7 +70,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 };
 
 template <UART_HandleTypeDef *Handle> class UartRxDma {
@@ -96,22 +94,20 @@ private:
           });
       HAL_UART_Receive_DMA(Handle, buf, size);
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_UART_AbortReceive(Handle);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_ERROR_CB_ID);
       HAL_UART_UnRegisterCallback(Handle,
                                   HAL_UART_ABORT_RECEIVE_COMPLETE_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
   UartRxDma(DmaBuffer auto &&buf)
-      : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
+      : state_{std::make_unique<State>(std::ranges::data(buf),
+                                       std::ranges::size(buf))} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::Timeout is_timeout{timeout};
@@ -137,7 +133,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 
   void advance(size_t len) {
     size_t read_idx = state_->read_idx.load(std::memory_order_relaxed);

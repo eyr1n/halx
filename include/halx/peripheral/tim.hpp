@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 #include "halx/core.hpp"
 
@@ -44,20 +45,17 @@ private:
             }
           });
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_TIM_UnRegisterCallback(Handle, HAL_TIM_PERIOD_ELAPSED_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
   using TimBase::attach_callback;
 
-  Tim() : state_{new State{}} {}
+  Tim() : state{std::make_unique<State>()} {}
 
   bool start() override { return HAL_TIM_Base_Start_IT(Handle) == HAL_OK; }
 
@@ -90,7 +88,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 };
 
 #endif

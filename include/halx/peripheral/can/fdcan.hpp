@@ -49,18 +49,15 @@ private:
             }
           });
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_FDCAN_UnRegisterRxFifo0Callback(Handle);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
-  FdCan() : state_{new State{}} {}
+  FdCan() : state{std::make_unique<State>()} {}
 
   bool start() {
     if (HAL_FDCAN_ConfigGlobalFilter(Handle, FDCAN_REJECT, FDCAN_REJECT,
@@ -121,7 +118,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 
   std::optional<size_t> find_rx_filter_index(const CanFilter &filter) {
     if (filter.ide) {

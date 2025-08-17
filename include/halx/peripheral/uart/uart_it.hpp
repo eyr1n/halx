@@ -28,20 +28,17 @@ private:
             state->notifier.set(0x2);
           });
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_UART_AbortTransmit(Handle);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_TX_COMPLETE_CB_ID);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_ERROR_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
-  UartTxIt() : state_{new State{}} {}
+  UartTxIt() : state_{std::make_unique<State>()} {}
 
   bool transmit(const uint8_t *data, size_t size, uint32_t timeout) {
     state_->notifier.reset();
@@ -57,7 +54,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 };
 
 template <UART_HandleTypeDef *Handle> class UartRxIt {
@@ -85,22 +82,19 @@ private:
           });
       HAL_UART_Receive_IT(Handle, &buf, 1);
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_UART_AbortReceive(Handle);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_RX_COMPLETE_CB_ID);
       HAL_UART_UnRegisterCallback(Handle, HAL_UART_ERROR_CB_ID);
       HAL_UART_UnRegisterCallback(Handle,
                                   HAL_UART_ABORT_RECEIVE_COMPLETE_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
-  UartRxIt(size_t size = 64) : state_{new State{size}} {}
+  UartRxIt(size_t size = 64) : state_{std::make_unique<State>(size)} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
     core::Timeout is_timeout{timeout};
@@ -121,7 +115,7 @@ public:
   size_t available() const { return state_->queue.size(); }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 };
 
 } // namespace halx::peripheral

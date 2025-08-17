@@ -46,18 +46,15 @@ private:
             }
           });
     }
-  };
 
-  struct Deleter {
-    void operator()(State *state) {
+    ~State() {
       HAL_CAN_UnRegisterCallback(Handle, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID);
       stm32cubemx_helper::set_context<Handle, State>(nullptr);
-      delete state;
     }
   };
 
 public:
-  BxCan() : state_{new State{}} {}
+  BxCan() : state_{std::make_unique<State>()} {}
 
   bool start() {
     if (HAL_CAN_ActivateNotification(Handle, CAN_IT_RX_FIFO0_MSG_PENDING) !=
@@ -114,7 +111,7 @@ public:
   }
 
 private:
-  std::unique_ptr<State, Deleter> state_;
+  std::unique_ptr<State> state_;
 
   std::optional<size_t> find_rx_filter_index(const CanFilter &) {
     auto it = std::find(state_->rx_callbacks.begin(),
