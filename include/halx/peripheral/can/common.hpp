@@ -86,23 +86,15 @@ public:
   virtual bool transmit(const CanMessage &msg, uint32_t timeout) = 0;
   virtual std::optional<size_t>
   attach_rx_filter(const CanFilter &filter,
-                   void (*callback)(const CanMessage &msg, void *context),
+                   void (*callback)(void *context, const CanMessage &msg),
                    void *context) = 0;
   virtual bool detach_rx_filter(size_t filter_index) = 0;
 
-  std::optional<size_t>
-  attach_rx_filter(const CanFilter &filter,
-                   std::function<void(const CanMessage &)> &&callback) {
+  std::optional<size_t> attach_rx_filter(
+      const CanFilter &filter,
+      std::move_only_function<void(const CanMessage &)> &&callback) {
     callback_ = std::move(callback);
-    return attach_rx_filter(
-        filter,
-        [](const CanMessage &msg, void *context) {
-          auto callback =
-              reinterpret_cast<std::function<void(const CanMessage &)> *>(
-                  context);
-          (*callback)(msg);
-        },
-        &callback_);
+    return attach_rx_filter(filter, callback_.call, callback_.c_ptr());
   }
 
   template <class Queue>
@@ -117,7 +109,7 @@ public:
   }
 
 private:
-  std::function<void(const CanMessage &)> callback_;
+  core::Function<void(const CanMessage &)> callback_;
 };
 
 } // namespace halx::peripheral

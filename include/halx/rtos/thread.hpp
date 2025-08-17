@@ -8,6 +8,8 @@
 
 #include <cmsis_os2.h>
 
+#include "halx/core.hpp"
+
 namespace halx::rtos {
 
 class Thread {
@@ -29,19 +31,14 @@ public:
     thread_id_ = ThreadId{osThreadNew(func, args, &attr)};
   }
 
-  Thread(std::function<void()> &&func, size_t stack_size, osPriority_t priority,
-         uint32_t attr_bits = 0)
+  Thread(std::move_only_function<void()> &&func, size_t stack_size,
+         osPriority_t priority, uint32_t attr_bits = 0)
       : func_{std::move(func)} {
     osThreadAttr_t attr{};
     attr.stack_size = stack_size;
     attr.priority = priority;
     attr.attr_bits = attr_bits;
-    thread_id_ = ThreadId{osThreadNew(
-        [](void *args) {
-          auto func = reinterpret_cast<std::function<void()> *>(args);
-          (*func)();
-        },
-        &func_, &attr)};
+    thread_id_ = ThreadId{osThreadNew(func_.call, func_.c_ptr(), &attr)};
   }
 
   bool detach() { return osThreadDetach(thread_id_.get()) == osOK; }
@@ -50,7 +47,7 @@ public:
 
 private:
   ThreadId thread_id_;
-  std::function<void()> func_;
+  core::Function<void()> func_;
 };
 
 } // namespace halx::rtos

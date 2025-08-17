@@ -4,6 +4,7 @@
 #include <stm32cubemx_helper/device.hpp>
 
 #include "core/common.hpp"
+#include "core/function.hpp"
 #include "core/notifier.hpp"
 #include "core/ring_buffer.hpp"
 #include "core/timeout.hpp"

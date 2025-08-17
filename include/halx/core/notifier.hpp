@@ -36,10 +36,10 @@ public:
     }
     return raised;
 #else
-    TimeoutHelper timeout_helper{timeout};
+    Timeout is_timeout{timeout};
     uint32_t raised;
     while ((raised = flags_.load(std::memory_order_relaxed) & flags) == 0) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return 0;
       }
       yield();

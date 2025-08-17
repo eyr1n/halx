@@ -103,9 +103,9 @@ public:
   UartRxIt(size_t size = 64) : state_{new State{size}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
-    core::TimeoutHelper timeout_helper{timeout};
+    core::Timeout is_timeout{timeout};
     while (state_->queue.size() < size) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return false;
       }
       core::yield();

@@ -44,7 +44,7 @@ private:
               auto rx_callback = state->rx_callbacks[filter_index];
               if (rx_callback) {
                 update_rx_message(msg, rx_header);
-                rx_callback(msg, state->rx_callback_contexts[filter_index]);
+                rx_callback(state->rx_callback_contexts[filter_index], msg);
               }
             }
           });
@@ -85,10 +85,10 @@ public:
 
   bool transmit(const CanMessage &msg, uint32_t timeout) {
     FDCAN_TxHeaderTypeDef tx_header = create_tx_header(msg);
-    core::TimeoutHelper timeout_helper{timeout};
+    core::Timeout is_timeout{timeout};
     while (HAL_FDCAN_AddMessageToTxFifoQ(Handle, &tx_header, msg.data.data()) !=
            HAL_OK) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return false;
       }
       core::yield();
@@ -96,10 +96,10 @@ public:
     return true;
   }
 
-  std::optional<size_t> attach_rx_filter(const CanFilter &filter,
-                                         void (*callback)(const CanMessage &msg,
-                                                          void *context),
-                                         void *context) {
+  std::optional<size_t>
+  attach_rx_filter(const CanFilter &filter,
+                   void (*callback)(void *context, const CanMessage &msg),
+                   void *context) {
     auto filter_index = find_rx_filter_index(filter);
     if (!filter_index) {
       return std::nullopt;

@@ -40,8 +40,8 @@ private:
               if (rx_callback) {
                 update_rx_message(msg, rx_header);
                 rx_callback(
-                    msg,
-                    state->rx_callback_contexts[rx_header.FilterMatchIndex]);
+                    state->rx_callback_contexts[rx_header.FilterMatchIndex],
+                    msg);
               }
             }
           });
@@ -78,10 +78,10 @@ public:
   bool transmit(const CanMessage &msg, uint32_t timeout) {
     CAN_TxHeaderTypeDef tx_header = create_tx_header(msg);
     uint32_t tx_mailbox;
-    core::TimeoutHelper timeout_helper{timeout};
+    core::Timeout is_timeout{timeout};
     while (HAL_CAN_AddTxMessage(Handle, &tx_header, msg.data.data(),
                                 &tx_mailbox) != HAL_OK) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return false;
       }
       core::yield();
@@ -89,10 +89,10 @@ public:
     return true;
   }
 
-  std::optional<size_t> attach_rx_filter(const CanFilter &filter,
-                                         void (*callback)(const CanMessage &msg,
-                                                          void *context),
-                                         void *context) {
+  std::optional<size_t>
+  attach_rx_filter(const CanFilter &filter,
+                   void (*callback)(void *context, const CanMessage &msg),
+                   void *context) {
     auto filter_index = find_rx_filter_index(filter);
     if (!filter_index) {
       return std::nullopt;

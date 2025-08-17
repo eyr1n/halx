@@ -6,12 +6,12 @@
 
 namespace halx::core {
 
-class TimeoutHelper {
+class Timeout {
 public:
-  TimeoutHelper(uint32_t timeout)
+  Timeout(uint32_t timeout)
       : deadline_{get_tick() + timeout}, no_timeout_{timeout == MAX_DELAY} {}
 
-  bool is_timeout() const {
+  operator bool() const {
     return !no_timeout_ && static_cast<int32_t>(get_tick() - deadline_) >= 0;
   }
 

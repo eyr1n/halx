@@ -17,18 +17,13 @@ public:
                                void *context) = 0;
   virtual bool detach_callback() = 0;
 
-  bool attach_callback(std::function<void()> &&callback) {
+  bool attach_callback(std::move_only_function<void()> &&callback) {
     callback_ = std::move(callback);
-    return attach_callback(
-        [](void *context) {
-          auto callback = reinterpret_cast<std::function<void()> *>(context);
-          (*callback)();
-        },
-        &callback_);
+    return attach_callback(callback_.call, callback_.c_ptr());
   }
 
 private:
-  std::function<void()> callback_;
+  core::Function<void()> callback_;
 };
 
 #ifdef HAL_TIM_MODULE_ENABLED

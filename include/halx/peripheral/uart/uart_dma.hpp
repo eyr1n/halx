@@ -114,9 +114,9 @@ public:
       : state_{new State{std::ranges::data(buf), std::ranges::size(buf)}} {}
 
   bool receive(uint8_t *data, size_t size, uint32_t timeout) {
-    core::TimeoutHelper timeout_helper{timeout};
+    core::Timeout is_timeout{timeout};
     while (available() < size) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return false;
       }
       core::yield();

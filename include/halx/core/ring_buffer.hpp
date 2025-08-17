@@ -38,10 +38,10 @@ public:
   }
 
   std::optional<T> pop(uint32_t timeout) {
-    core::TimeoutHelper timeout_helper{timeout};
+    core::Timeout is_timeout{timeout};
     std::optional<T> value;
     while (!(value = pop())) {
-      if (timeout_helper.is_timeout()) {
+      if (is_timeout) {
         return std::nullopt;
       }
       yield();
