@@ -16,7 +16,7 @@ private:
   struct State {
     static constexpr uint32_t FILTER_BANK_SIZE = 14;
 
-    std::array<void (*)(const CanMessage &msg, void *context), FILTER_BANK_SIZE>
+    std::array<void (*)(void *context, const CanMessage &msg), FILTER_BANK_SIZE>
         rx_callbacks{};
     std::array<void *, FILTER_BANK_SIZE> rx_callback_contexts{};
 

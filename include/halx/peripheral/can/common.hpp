@@ -101,7 +101,7 @@ public:
   std::optional<size_t> attach_rx_queue(const CanFilter &filter, Queue &queue) {
     return attach_rx_filter(
         filter,
-        [](const CanMessage &msg, void *context) {
+        [](void *context, const CanMessage &msg) {
           auto *queue = static_cast<Queue *>(context);
           queue->push(msg);
         },

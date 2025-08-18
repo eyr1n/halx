@@ -26,10 +26,10 @@ public:
   bool transmit(const CanMessage &msg, uint32_t timeout) override {
     return can_.transmit(msg, timeout);
   }
-  std::optional<size_t> attach_rx_filter(const CanFilter &filter,
-                                         void (*callback)(const CanMessage &msg,
-                                                          void *context),
-                                         void *context) override {
+  std::optional<size_t>
+  attach_rx_filter(const CanFilter &filter,
+                   void (*callback)(void *context, const CanMessage &msg),
+                   void *context) override {
     return can_.attach_rx_filter(filter, callback, context);
   }
   bool detach_rx_filter(size_t filter_index) override {
@@ -54,10 +54,10 @@ public:
   bool transmit(const CanMessage &msg, uint32_t timeout) override {
     return can_.transmit(msg, timeout);
   }
-  std::optional<size_t> attach_rx_filter(const CanFilter &filter,
-                                         void (*callback)(const CanMessage &msg,
-                                                          void *context),
-                                         void *context) override {
+  std::optional<size_t>
+  attach_rx_filter(const CanFilter &filter,
+                   void (*callback)(void *context, const CanMessage &msg),
+                   void *context) override {
     return can_.attach_rx_filter(filter, callback, context);
   }
   bool detach_rx_filter(size_t filter_index) override {

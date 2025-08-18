@@ -14,7 +14,7 @@ namespace halx::peripheral {
 template <FDCAN_HandleTypeDef *Handle> class FdCan {
 private:
   struct State {
-    std::vector<void (*)(const CanMessage &msg, void *context)> rx_callbacks;
+    std::vector<void (*)(void *context, const CanMessage &msg)> rx_callbacks;
     std::vector<void *> rx_callback_contexts;
 
     State()
@@ -57,7 +57,7 @@ private:
   };
 
 public:
-  FdCan() : state{std::make_unique<State>()} {}
+  FdCan() : state_{std::make_unique<State>()} {}
 
   bool start() {
     if (HAL_FDCAN_ConfigGlobalFilter(Handle, FDCAN_REJECT, FDCAN_REJECT,
