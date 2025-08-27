@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rtos/mailbox.hpp"
 #include "rtos/mutex.hpp"
 #include "rtos/queue.hpp"
 #include "rtos/semaphore.hpp"
