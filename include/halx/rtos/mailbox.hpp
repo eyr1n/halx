@@ -77,7 +77,12 @@ public:
 
   void clear() { xQueueReset(queue_handle_.get()); }
 
-  size_t size() const { return uxQueueMessagesWaiting(queue_handle_.get()); }
+  size_t size() const {
+    if (xPortIsInsideInterrupt() == pdTRUE) {
+      return uxQueueMessagesWaitingFromISR(queue_handle_.get());
+    }
+    return uxQueueMessagesWaiting(queue_handle_.get());
+  }
 
   size_t capacity() const { return 1; }
 
