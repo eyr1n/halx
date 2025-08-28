@@ -35,14 +35,6 @@ private:
 
 #ifdef HAL_EXTI_MODULE_ENABLED
 
-template <uint32_t Line> struct instance_holder {
-  static inline EXTI_HandleTypeDef hexti{};
-};
-
-template <uint32_t Line> static constexpr EXTI_HandleTypeDef *get_instance() {
-  return &instance_holder<Line>::hexti;
-}
-
 template <uint32_t Line> class Exti : public ExtiBase {
 private:
   struct State {
