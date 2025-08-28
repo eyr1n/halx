@@ -8,7 +8,7 @@ add_subdirectory(stm32cubemx_helper)
 # halx
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE
-  src/gpio.cpp
+  src/exti.cpp
   src/stdout.cpp
 )
 target_link_libraries(${PROJECT_NAME} INTERFACE
