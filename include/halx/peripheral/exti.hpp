@@ -35,18 +35,25 @@ private:
 
 #ifdef HAL_EXTI_MODULE_ENABLED
 
+template <uint32_t Line> struct instance_holder {
+  static inline EXTI_HandleTypeDef hexti{};
+};
+
+template <uint32_t Line> static constexpr EXTI_HandleTypeDef *get_instance() {
+  return &instance_holder<Line>::hexti;
+}
+
 template <uint32_t Line> class Exti : public ExtiBase {
 private:
   struct State {
-    EXTI_HandleTypeDef hexti{};
     void (*callback)(void *context) = nullptr;
     void *context = nullptr;
 
     State(uint32_t mode, uint32_t trigger, uint32_t gpio_sel,
           uint32_t preempt_priority, uint32_t sub_priority) {
-      set_context(this);
+      stm32cubemx_helper::set_context<&hexti, State>(this);
       HAL_EXTI_RegisterCallback(&hexti, HAL_EXTI_COMMON_CB_ID, [] {
-        auto state = get_context();
+        auto state = stm32cubemx_helper::get_context<&hexti, State>();
         if (state->callback) {
           state->callback(state->context);
         }
@@ -68,7 +75,7 @@ private:
       HAL_NVIC_DisableIRQ(irqn);
       HAL_EXTI_ClearConfigLine(&hexti);
       HAL_EXTI_RegisterCallback(&hexti, HAL_EXTI_COMMON_CB_ID, nullptr);
-      set_context(nullptr);
+      stm32cubemx_helper::set_context<&hexti, State>(nullptr);
     }
 
     static inline IRQn_Type get_irqn(uint32_t line) {
@@ -130,14 +137,7 @@ public:
 private:
   std::unique_ptr<State> state_;
 
-  static inline State *&context() {
-    static State *context = nullptr;
-    return context;
-  }
-
-  static inline State *get_context() { return context(); }
-
-  static inline void set_context(State *value) { context() = value; }
+  static inline EXTI_HandleTypeDef hexti{};
 
   friend void ::EXTI0_IRQHandler();
   friend void ::EXTI1_IRQHandler();
