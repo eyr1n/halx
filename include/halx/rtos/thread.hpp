@@ -38,7 +38,8 @@ public:
     attr.stack_size = stack_size;
     attr.priority = priority;
     attr.attr_bits = attr_bits;
-    thread_id_ = ThreadId{osThreadNew(func_.call, func_.c_ptr(), &attr)};
+    thread_id_ = ThreadId{
+        osThreadNew(&core::Function<void()>::call, func_.c_ptr(), &attr)};
   }
 
   bool detach() { return osThreadDetach(thread_id_.get()) == osOK; }

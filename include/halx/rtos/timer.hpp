@@ -32,7 +32,8 @@ public:
       : func_{std::move(func)} {
     osTimerAttr_t attr{};
     attr.attr_bits = attr_bits;
-    timer_id_ = TimerId{osTimerNew(func_.call, type, func_.c_ptr(), &attr)};
+    timer_id_ = TimerId{
+        osTimerNew(&core::Function<void()>::call, type, func_.c_ptr(), &attr)};
   }
 
   bool start(uint32_t ticks) {

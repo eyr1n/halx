@@ -20,7 +20,7 @@ public:
 
   bool attach_callback(std::move_only_function<void()> &&callback) {
     callback_ = std::move(callback);
-    return attach_callback(callback_.call, callback_.c_ptr());
+    return attach_callback(&core::Function<void()>::call, callback_.c_ptr());
   }
 
 private:
