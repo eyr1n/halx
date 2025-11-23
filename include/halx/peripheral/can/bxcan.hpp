@@ -140,13 +140,13 @@ private:
     filter_config.FilterBank = filter_index;
 #ifdef CAN2
     if (Handle->Instance == CAN2) {
-      filter_config.FilterBank += FILTER_BANK_SIZE;
+      filter_config.FilterBank += State::FILTER_BANK_SIZE;
     }
 #endif
     filter_config.FilterMode = CAN_FILTERMODE_IDMASK;
     filter_config.FilterScale = CAN_FILTERSCALE_32BIT;
     filter_config.FilterActivation = ENABLE;
-    filter_config.SlaveStartFilterBank = FILTER_BANK_SIZE;
+    filter_config.SlaveStartFilterBank = State::FILTER_BANK_SIZE;
 
     return HAL_CAN_ConfigFilter(Handle, &filter_config) == HAL_OK;
   }
@@ -156,7 +156,7 @@ private:
     filter_config.FilterBank = filter_index;
 #ifdef CAN2
     if (Handle->Instance == CAN2) {
-      filter_config.FilterBank += FILTER_BANK_SIZE;
+      filter_config.FilterBank += State::FILTER_BANK_SIZE;
     }
 #endif
     filter_config.FilterActivation = DISABLE;
